@@ -1,0 +1,13 @@
+.DS_Store
+DerivedData/
+build/
+cmake-build-*/
+*.xcuserstate
+xcuserdata/
+previews-live/
+snapshot.json
+*.chrono-timeline
+*.token
+*.cookie
+*.key
+*.pem
