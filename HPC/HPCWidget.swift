@@ -236,6 +236,42 @@ private extension Optional where Wrapped == Int {
     var value: Int { self ?? 0 }
 }
 
+func resolvedAvailableCount(reported: Int?, allocated: Int?, total: Int?) -> Int {
+    guard let total, total > 0 else {
+        return max(0, reported ?? 0)
+    }
+
+    let reportedValue = min(max(0, reported ?? 0), total)
+    guard let allocated else {
+        return reportedValue
+    }
+
+    let derivedValue = total - min(max(0, allocated), total)
+    guard let reported, (0...total).contains(reported) else {
+        return derivedValue
+    }
+
+    // Missing free-counts decode as nil, while some older snapshots emitted a
+    // contradictory zero. Prefer the allocation-derived value in either case.
+    return reported == 0 && derivedValue > 0 ? derivedValue : reportedValue
+}
+
+private extension ClusterSummary {
+    var availableGPUCount: Int {
+        resolvedAvailableCount(reported: gpuFree, allocated: gpuAlloc, total: gpuTotal)
+    }
+
+    var availableCPUCount: Int {
+        resolvedAvailableCount(reported: cpuFree, allocated: cpuAlloc, total: cpuTotal)
+    }
+}
+
+private extension ClusterNode {
+    var availableGPUCount: Int {
+        resolvedAvailableCount(reported: gpuFree, allocated: gpuAlloc, total: gpuTotal)
+    }
+}
+
 private extension HPCSnapshot {
     var accounts: [HPCAccount] { payload?.accounts ?? [] }
     var nodes: [ClusterNode] { payload?.clusterResources?.nodes ?? [] }
@@ -330,7 +366,7 @@ private struct HPCHeader: View {
 private struct NodeRow: View {
     let node: ClusterNode
 
-    private var free: Int { node.gpuFree.value }
+    private var free: Int { node.availableGPUCount }
     private var total: Int { node.gpuTotal.value }
     private var tint: Color { free >= 4 ? .green : (free > 0 ? .orange : .secondary) }
 
@@ -525,12 +561,12 @@ private struct CompactNodeStrip: View {
             ForEach(Array(nodes.prefix(4))) { node in
                 HStack(spacing: 2) {
                     Circle()
-                        .fill(node.gpuFree.value >= 4 ? Color.green : (node.gpuFree.value > 0 ? Color.orange : Color.secondary))
+                        .fill(node.availableGPUCount >= 4 ? Color.green : (node.availableGPUCount > 0 ? Color.orange : Color.secondary))
                         .frame(width: 5, height: 5)
-                    Text("\(node.gpuFree.value)")
+                    Text("\(node.availableGPUCount)")
                         .monospacedDigit()
                 }
-                .accessibilityLabel("\(node.name ?? "GPU") 可用 \(node.gpuFree.value)")
+                .accessibilityLabel("\(node.name ?? "GPU") 可用 \(node.availableGPUCount)")
             }
         }
         .font(.caption2)
@@ -594,9 +630,9 @@ struct HPCWidgetView: View {
     var previewFamily: WidgetFamily? = nil
 
     private var snapshot: HPCSnapshot { entry.snapshot }
-    private var freeGPU: Int { snapshot.summary.gpuFree.value }
+    private var freeGPU: Int { snapshot.summary.availableGPUCount }
     private var totalGPU: Int { snapshot.summary.gpuTotal.value }
-    private var freeCPU: Int { snapshot.summary.cpuFree.value }
+    private var freeCPU: Int { snapshot.summary.availableCPUCount }
     private var totalCPU: Int { snapshot.summary.cpuTotal.value }
     private var runningTaskCount: Int {
         snapshot.accounts.reduce(0) { $0 + ($1.summary?.running.value ?? 0) }
