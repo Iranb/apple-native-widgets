@@ -118,6 +118,10 @@ private func dayCount(to date: Date, from now: Date) -> Int {
     max(0, Calendar.current.dateComponents([.day], from: now, to: date).day ?? 0)
 }
 
+private func hourCount(to date: Date, from now: Date) -> Int {
+    max(1, Int(ceil(date.timeIntervalSince(now) / 3_600)))
+}
+
 private func urgencyColor(days: Int) -> Color {
     if days <= 3 { return .red }
     if days <= 10 { return .orange }
@@ -166,16 +170,19 @@ private struct CountdownHero: View {
     let compact: Bool
 
     private var days: Int { dayCount(to: deadline.date, from: now) }
+    private var showsHours: Bool { days == 0 }
+    private var remainingValue: Int { showsHours ? hourCount(to: deadline.date, from: now) : days }
+    private var remainingUnit: String { showsHours ? "小时" : "天" }
 
     var body: some View {
         VStack(alignment: .leading, spacing: compact ? 2 : 4) {
             HStack(alignment: .firstTextBaseline, spacing: 4) {
-                Text("\(days)")
+                Text("\(remainingValue)")
                     .font(.system(size: compact ? 42 : 48, weight: .bold, design: .rounded))
                     .tracking(-1.5)
                     .monospacedDigit()
                     .foregroundStyle(urgencyColor(days: days))
-                Text("天")
+                Text(remainingUnit)
                     .font(.headline.weight(.semibold))
                     .foregroundStyle(.secondary)
             }
@@ -187,7 +194,7 @@ private struct CountdownHero: View {
                 .foregroundStyle(.secondary)
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("距离 \(deadline.record.title) 还有 \(days) 天")
+        .accessibilityLabel("距离 \(deadline.record.title) 还有 \(remainingValue) \(remainingUnit)")
     }
 }
 
