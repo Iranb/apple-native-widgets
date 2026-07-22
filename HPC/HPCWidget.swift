@@ -461,24 +461,28 @@ private struct AccountRow: View {
 
 private struct AccountStatusLegend: View {
     var body: some View {
-        HStack(spacing: 8) {
-            item("OK", color: .green)
-            item("LOGIN", color: .purple)
-            item("WARN", color: .orange)
-            item("ERR", color: .red)
+        HStack(spacing: 5) {
+            item("正常", color: .green)
+            item("登录", color: .purple)
+            item("关注", color: .orange)
+            item("异常", color: .red)
         }
         .font(.system(size: 8, weight: .semibold, design: .rounded))
         .foregroundStyle(.secondary)
+        .lineLimit(1)
+        .minimumScaleFactor(0.8)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("账号状态：绿色正常，紫色需登录，橙色需关注，红色异常")
     }
 
     private func item(_ label: String, color: Color) -> some View {
-        HStack(spacing: 3) {
+        HStack(spacing: 2) {
             Circle()
                 .fill(color)
                 .frame(width: 5, height: 5)
             Text(label)
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
         }
     }
 }

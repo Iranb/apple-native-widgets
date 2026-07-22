@@ -74,6 +74,12 @@ struct PreviewRenderer {
         try render(HPCWidgetView(entry: entry, previewFamily: .systemLarge), size: CGSize(width: 338, height: 354), name: "hpc-large", output: output)
         try render(HPCWidgetView(entry: secondPageEntry, previewFamily: .systemMedium), size: CGSize(width: 338, height: 158), name: "hpc-medium-page2", output: output)
         try render(HPCWidgetView(entry: secondPageEntry, previewFamily: .systemLarge), size: CGSize(width: 338, height: 354), name: "hpc-large-page2", output: output)
+#elseif AUTODL_PREVIEW
+        let snapshot = loadJSON(AutoDLSnapshot.self, path: snapshotPath) ?? .preview
+        let entry = AutoDLEntry(date: .now, snapshot: snapshot)
+        try render(AutoDLWidgetView(entry: entry, previewFamily: .systemSmall), size: CGSize(width: 158, height: 158), name: "autodl-small", output: output)
+        try render(AutoDLWidgetView(entry: entry, previewFamily: .systemMedium), size: CGSize(width: 338, height: 158), name: "autodl-medium", output: output)
+        try render(AutoDLWidgetView(entry: entry, previewFamily: .systemLarge), size: CGSize(width: 338, height: 354), name: "autodl-large", output: output)
 #else
         let snapshot = loadJSON(DeadlineSnapshot.self, path: snapshotPath) ?? .preview
         let entry = DeadlineEntry(date: .now, snapshot: snapshot)
