@@ -213,7 +213,7 @@ private struct DeadlineRow: View {
                 .font(.caption2.weight(.semibold))
                 .lineLimit(1)
                 .layoutPriority(1)
-            Spacer(minLength: 4)
+                .frame(maxWidth: .infinity, alignment: .leading)
             Text(deadline.date, format: .dateTime.month(.twoDigits).day(.twoDigits))
                 .font(.system(size: 10, weight: .medium, design: .rounded))
                 .monospacedDigit()
@@ -388,9 +388,9 @@ struct DeadlineWidgetView: View {
         if let next = upcoming.first {
             VStack(alignment: .leading, spacing: 14) {
                 DeadlineHeader(name: conference.name, hasError: entry.snapshot.error != nil)
-                HStack(alignment: .center, spacing: 18) {
+                HStack(alignment: .center, spacing: 14) {
                     CountdownHero(deadline: next, now: entry.date, compact: false)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .frame(width: 108, alignment: .leading)
                     VStack(alignment: .leading, spacing: 8) {
                         ForEach(Array(upcoming.dropFirst().prefix(3))) { deadline in
                             DeadlineRow(deadline: deadline, now: entry.date)
@@ -444,6 +444,7 @@ struct AIDeadlineWidget: Widget {
         .configurationDisplayName(displayName)
         .description("查看最近的投稿截止日与论文进度。")
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
+        .contentMarginsDisabled()
     }
 }
 
