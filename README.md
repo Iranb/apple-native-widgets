@@ -7,6 +7,15 @@ Two open-source macOS WidgetKit components built with SwiftUI:
 
 The extensions are read-only. They render local redacted JSON snapshots and never receive portal credentials, submit jobs, cancel jobs, or contact an HPC service directly.
 
+## Related Codex skills
+
+The widget is the read-only presentation layer for these separately maintained workflows:
+
+- [BJTU HPC skill](https://github.com/Iranb/bjtu-hpc-codex-skill) — portal status, redacted snapshots, dashboard integration, and native widget maintenance.
+- [BJTU HPC Submit skill](https://github.com/Iranb/bjtu-hpc-submit-skill) — guarded authentication, upload, Slurm preflight, submission, and monitoring workflows.
+
+Neither skill is embedded in the widget extension. Credentials and job mutations remain outside the WidgetKit process.
+
 ## Screenshots
 
 The committed screenshots use synthetic account names and project data.

@@ -150,15 +150,19 @@ private struct DeadlineHeader: View {
                 .foregroundStyle(hasError ? .red : .blue)
             Text(name)
                 .font(.subheadline.weight(.semibold))
-            Spacer()
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+            Spacer(minLength: 8)
             if hasError {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .font(.caption)
                     .foregroundStyle(.red)
             } else {
-                Text("截止日")
+                Text("截止日期")
                     .font(.caption2.weight(.medium))
                     .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: true, vertical: false)
+                    .layoutPriority(1)
             }
         }
     }
