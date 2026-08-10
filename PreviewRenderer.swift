@@ -77,9 +77,13 @@ struct PreviewRenderer {
 #else
         let snapshot = loadJSON(DeadlineSnapshot.self, path: snapshotPath) ?? .preview
         let entry = DeadlineEntry(date: .now, snapshot: snapshot)
+        let menuEntry = DeadlineEntry(date: .now, snapshot: snapshot, isConferenceMenuOpen: true)
         try render(DeadlineWidgetView(entry: entry, previewFamily: .systemSmall), size: CGSize(width: 158, height: 158), name: "deadline-small", output: output)
         try render(DeadlineWidgetView(entry: entry, previewFamily: .systemMedium), size: CGSize(width: 338, height: 158), name: "deadline-medium", output: output)
         try render(DeadlineWidgetView(entry: entry, previewFamily: .systemLarge), size: CGSize(width: 338, height: 354), name: "deadline-large", output: output)
+        try render(DeadlineWidgetView(entry: menuEntry, previewFamily: .systemSmall), size: CGSize(width: 158, height: 158), name: "deadline-menu-small", output: output)
+        try render(DeadlineWidgetView(entry: menuEntry, previewFamily: .systemMedium), size: CGSize(width: 338, height: 158), name: "deadline-menu-medium", output: output)
+        try render(DeadlineWidgetView(entry: menuEntry, previewFamily: .systemLarge), size: CGSize(width: 338, height: 354), name: "deadline-menu-large", output: output)
 #endif
     }
 
