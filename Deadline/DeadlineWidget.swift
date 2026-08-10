@@ -171,7 +171,10 @@ extension DeadlineSnapshot {
                 name: "ICLR 2027",
                 deadlines: [
                     DeadlineRecord(title: "摘要", dueAt: ISO8601DateFormatter().string(from: .now.addingTimeInterval(32 * 86_400))),
-                    DeadlineRecord(title: "全文", dueAt: ISO8601DateFormatter().string(from: .now.addingTimeInterval(37 * 86_400)))
+                    DeadlineRecord(title: "全文", dueAt: ISO8601DateFormatter().string(from: .now.addingTimeInterval(37 * 86_400))),
+                    DeadlineRecord(title: "评审发布", dueAt: ISO8601DateFormatter().string(from: .now.addingTimeInterval(74 * 86_400))),
+                    DeadlineRecord(title: "公开讨论截止", dueAt: ISO8601DateFormatter().string(from: .now.addingTimeInterval(87 * 86_400))),
+                    DeadlineRecord(title: "最终结果", dueAt: ISO8601DateFormatter().string(from: .now.addingTimeInterval(115 * 86_400)))
                 ],
                 papers: []
             ),
