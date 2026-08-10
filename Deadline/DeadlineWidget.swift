@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import Foundation
+import AppIntents
 import SwiftUI
 import WidgetKit
 
@@ -40,6 +41,71 @@ struct PaperStatus: Decodable, Identifiable {
 struct DeadlineEntry: TimelineEntry {
     let date: Date
     let snapshot: DeadlineSnapshot
+    let selectedConferenceName: String?
+    let isConferenceMenuOpen: Bool
+
+    init(
+        date: Date,
+        snapshot: DeadlineSnapshot,
+        selectedConferenceName: String? = nil,
+        isConferenceMenuOpen: Bool = false
+    ) {
+        self.date = date
+        self.snapshot = snapshot
+        self.selectedConferenceName = selectedConferenceName
+        self.isConferenceMenuOpen = isConferenceMenuOpen
+    }
+}
+
+private enum ConferenceSelection {
+    static let selectedNameKey = "AIDeadlineSelectedConferenceName"
+    static let menuOpenKey = "AIDeadlineConferenceMenuOpen"
+
+    static var selectedName: String? {
+        let value = UserDefaults.standard.string(forKey: selectedNameKey)
+        return value?.isEmpty == false ? value : nil
+    }
+
+    static var isMenuOpen: Bool {
+        UserDefaults.standard.bool(forKey: menuOpenKey)
+    }
+}
+
+struct ToggleConferenceMenuIntent: AppIntent {
+    static let title: LocalizedStringResource = "展开会议列表"
+    static let description = IntentDescription("展开或收起 AI Deadline 组件中的会议列表。")
+    static var openAppWhenRun: Bool { false }
+
+    func perform() async throws -> some IntentResult {
+        let defaults = UserDefaults.standard
+        defaults.set(!defaults.bool(forKey: ConferenceSelection.menuOpenKey), forKey: ConferenceSelection.menuOpenKey)
+        WidgetCenter.shared.reloadAllTimelines()
+        return .result()
+    }
+}
+
+struct SelectDeadlineConferenceIntent: AppIntent {
+    static let title: LocalizedStringResource = "切换会议"
+    static let description = IntentDescription("切换 AI Deadline 组件当前显示的会议。")
+    static var openAppWhenRun: Bool { false }
+
+    @Parameter(title: "会议") var conferenceName: String
+
+    init() {
+        conferenceName = ""
+    }
+
+    init(conferenceName: String) {
+        self.conferenceName = conferenceName
+    }
+
+    func perform() async throws -> some IntentResult {
+        let defaults = UserDefaults.standard
+        defaults.set(conferenceName, forKey: ConferenceSelection.selectedNameKey)
+        defaults.set(false, forKey: ConferenceSelection.menuOpenKey)
+        WidgetCenter.shared.reloadAllTimelines()
+        return .result()
+    }
 }
 
 struct DeadlineProvider: TimelineProvider {
@@ -48,12 +114,23 @@ struct DeadlineProvider: TimelineProvider {
     }
 
     func getSnapshot(in context: Context, completion: @escaping (DeadlineEntry) -> Void) {
-        completion(DeadlineEntry(date: .now, snapshot: loadSnapshot() ?? .preview))
+        completion(makeEntry(snapshot: loadSnapshot() ?? .preview))
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<DeadlineEntry>) -> Void) {
         let snapshot = loadSnapshot() ?? .preview
-        completion(Timeline(entries: [DeadlineEntry(date: .now, snapshot: snapshot)], policy: .after(.now.addingTimeInterval(60))))
+        completion(Timeline(entries: [makeEntry(snapshot: snapshot)], policy: .after(.now.addingTimeInterval(60))))
+    }
+
+    private func makeEntry(snapshot: DeadlineSnapshot) -> DeadlineEntry {
+        let availableNames = Set(snapshot.conferences.map(\.name))
+        let selectedName = ConferenceSelection.selectedName.flatMap { availableNames.contains($0) ? $0 : nil }
+        return DeadlineEntry(
+            date: .now,
+            snapshot: snapshot,
+            selectedConferenceName: selectedName,
+            isConferenceMenuOpen: ConferenceSelection.isMenuOpen
+        )
     }
 
     private func loadSnapshot() -> DeadlineSnapshot? {
@@ -84,6 +161,27 @@ extension DeadlineSnapshot {
                     PaperStatus(id: "project-beta", title: "Project Beta", status: "分析中", owner: nil, updatedAt: nil),
                     PaperStatus(id: "project-gamma", title: "Project Gamma", status: "待同步", owner: nil, updatedAt: nil)
                 ]
+            ),
+            ConferenceRecord(
+                name: "CVPR 2027",
+                deadlines: [],
+                papers: []
+            ),
+            ConferenceRecord(
+                name: "ICLR 2027",
+                deadlines: [
+                    DeadlineRecord(title: "摘要", dueAt: ISO8601DateFormatter().string(from: .now.addingTimeInterval(32 * 86_400))),
+                    DeadlineRecord(title: "全文", dueAt: ISO8601DateFormatter().string(from: .now.addingTimeInterval(37 * 86_400))),
+                    DeadlineRecord(title: "评审发布", dueAt: ISO8601DateFormatter().string(from: .now.addingTimeInterval(74 * 86_400))),
+                    DeadlineRecord(title: "公开讨论截止", dueAt: ISO8601DateFormatter().string(from: .now.addingTimeInterval(87 * 86_400))),
+                    DeadlineRecord(title: "最终结果", dueAt: ISO8601DateFormatter().string(from: .now.addingTimeInterval(115 * 86_400)))
+                ],
+                papers: []
+            ),
+            ConferenceRecord(
+                name: "NeurIPS 2027",
+                deadlines: [],
+                papers: []
             )
         ],
         error: nil
@@ -142,20 +240,33 @@ private func statusColor(_ status: String) -> Color {
 private struct DeadlineHeader: View {
     let name: String
     let hasError: Bool
+    let isMenuOpen: Bool
+    var compact: Bool = false
 
     var body: some View {
         HStack(spacing: 7) {
-            Image(systemName: "calendar.badge.clock")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(hasError ? .red : .blue)
-            Text(name)
-                .font(.subheadline.weight(.semibold))
+            Button(intent: ToggleConferenceMenuIntent()) {
+                HStack(spacing: 7) {
+                    Image(systemName: "calendar.badge.clock")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(hasError ? .red : .blue)
+                    Text(name)
+                        .font(.subheadline.weight(.semibold))
+                        .lineLimit(1)
+                    Image(systemName: isMenuOpen ? "chevron.up" : "chevron.down")
+                        .font(.system(size: 8, weight: .bold))
+                        .foregroundStyle(.secondary)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(isMenuOpen ? "收起会议列表" : "切换会议，当前为 \(name)")
             Spacer()
             if hasError {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .font(.caption)
                     .foregroundStyle(.red)
-            } else {
+            } else if !compact {
                 Text("截止日")
                     .font(.caption2.weight(.medium))
                     .foregroundStyle(.secondary)
@@ -312,7 +423,11 @@ struct DeadlineWidgetView: View {
     var previewFamily: WidgetFamily? = nil
 
     private var conference: ConferenceRecord {
-        entry.snapshot.conferences.first(where: { !$0.deadlines.isEmpty })
+        if let selectedName = entry.selectedConferenceName,
+           let selected = entry.snapshot.conferences.first(where: { $0.name == selectedName }) {
+            return selected
+        }
+        return entry.snapshot.conferences.first(where: { !$0.deadlines.isEmpty })
             ?? entry.snapshot.conferences.first
             ?? ConferenceRecord(name: "AI Deadline", deadlines: [], papers: [])
     }
@@ -320,29 +435,100 @@ struct DeadlineWidgetView: View {
     private var upcoming: [DatedDeadline] { conference.datedDeadlines(after: entry.date) }
 
     var body: some View {
-        Group {
-            switch previewFamily ?? family {
-            case .systemSmall: smallView
-            case .systemLarge: largeView
-            default: mediumView
+        ZStack(alignment: .topLeading) {
+            Group {
+                switch previewFamily ?? family {
+                case .systemSmall: smallView
+                case .systemLarge: largeView
+                default: mediumView
+                }
+            }
+            if entry.isConferenceMenuOpen {
+                conferenceMenu
+                    .transition(.opacity)
+                    .zIndex(2)
             }
         }
         .modifier(DeadlineWidgetContainer(enabled: previewFamily == nil))
         .modifier(DeadlineWidgetLink(enabled: previewFamily == nil))
     }
 
-    private var emptyState: some View {
-        ContentUnavailableView {
-            Label("暂无截止日", systemImage: "calendar")
-        } description: {
-            Text("同步状态后会显示在这里")
+    private var conferenceMenu: some View {
+        let isSmall = (previewFamily ?? family) == .systemSmall
+        return VStack(alignment: .leading, spacing: 2) {
+            ForEach(entry.snapshot.conferences) { candidate in
+                Button(intent: SelectDeadlineConferenceIntent(conferenceName: candidate.name)) {
+                    HStack(spacing: 7) {
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 9, weight: .bold))
+                            .foregroundStyle(.blue)
+                            .opacity(candidate.name == conference.name ? 1 : 0)
+                            .frame(width: 11)
+                        Text(candidate.name)
+                            .font(isSmall ? .caption2.weight(.semibold) : .caption.weight(.semibold))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.82)
+                        Spacer(minLength: isSmall ? 3 : 6)
+                        if let next = candidate.datedDeadlines(after: entry.date).first {
+                            Text("\(dayCount(to: next.date, from: entry.date))天")
+                                .font(.caption2.monospacedDigit().weight(.medium))
+                                .foregroundStyle(.secondary)
+                        } else {
+                            Text("TBA")
+                                .font(.caption2.weight(.medium))
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .padding(.horizontal, 8)
+                    .frame(height: isSmall ? 23 : 25)
+                    .background(candidate.name == conference.name ? Color.blue.opacity(0.12) : Color.clear)
+                    .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
         }
+        .padding(5)
+        .frame(width: isSmall ? 142 : 178)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 11, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 11, style: .continuous)
+                .stroke(.primary.opacity(0.12), lineWidth: 0.5)
+        }
+        .padding(.top, isSmall ? 36 : 39)
+        .padding(.leading, isSmall ? 9 : 13)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("会议列表")
+    }
+
+    private var emptyState: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            DeadlineHeader(
+                name: conference.name,
+                hasError: entry.snapshot.error != nil,
+                isMenuOpen: entry.isConferenceMenuOpen,
+                compact: (previewFamily ?? family) == .systemSmall
+            )
+            Spacer(minLength: 0)
+            ContentUnavailableView {
+                Label("暂无截止日", systemImage: "calendar")
+            } description: {
+                Text("官网待公布或当前阶段已结束")
+            }
+            Spacer(minLength: 0)
+        }
+        .padding((previewFamily ?? family) == .systemSmall ? 12 : 17)
     }
 
     @ViewBuilder private var smallView: some View {
         if let next = upcoming.first {
             VStack(alignment: .leading, spacing: 8) {
-                DeadlineHeader(name: conference.name, hasError: entry.snapshot.error != nil)
+                DeadlineHeader(
+                    name: conference.name,
+                    hasError: entry.snapshot.error != nil,
+                    isMenuOpen: entry.isConferenceMenuOpen,
+                    compact: true
+                )
                 Spacer(minLength: 0)
                 CountdownHero(deadline: next, now: entry.date, compact: true)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -357,7 +543,7 @@ struct DeadlineWidgetView: View {
             }
             .padding(14)
         } else {
-            emptyState.padding(12)
+            emptyState
         }
     }
 
@@ -365,7 +551,12 @@ struct DeadlineWidgetView: View {
         if let next = upcoming.first {
             HStack(spacing: 16) {
                 VStack(alignment: .leading, spacing: 8) {
-                    DeadlineHeader(name: conference.name, hasError: entry.snapshot.error != nil)
+                    DeadlineHeader(
+                        name: conference.name,
+                        hasError: entry.snapshot.error != nil,
+                        isMenuOpen: entry.isConferenceMenuOpen,
+                        compact: true
+                    )
                     Spacer(minLength: 0)
                     CountdownHero(deadline: next, now: entry.date, compact: false)
                 }
@@ -387,14 +578,18 @@ struct DeadlineWidgetView: View {
             }
             .padding(16)
         } else {
-            emptyState.padding(12)
+            emptyState
         }
     }
 
     @ViewBuilder private var largeView: some View {
         if let next = upcoming.first {
             VStack(alignment: .leading, spacing: 14) {
-                DeadlineHeader(name: conference.name, hasError: entry.snapshot.error != nil)
+                DeadlineHeader(
+                    name: conference.name,
+                    hasError: entry.snapshot.error != nil,
+                    isMenuOpen: entry.isConferenceMenuOpen
+                )
                 HStack(alignment: .center, spacing: 14) {
                     CountdownHero(deadline: next, now: entry.date, compact: false)
                         .frame(width: 108, alignment: .leading)
@@ -424,7 +619,7 @@ struct DeadlineWidgetView: View {
             }
             .padding(17)
         } else {
-            emptyState.padding(12)
+            emptyState
         }
     }
 }
