@@ -6,6 +6,9 @@ cmake-build-*/
 xcuserdata/
 previews-live/
 snapshot.json
+AutoDL/config.json
+__pycache__/
+*.pyc
 *.chrono-timeline
 *.token
 *.cookie

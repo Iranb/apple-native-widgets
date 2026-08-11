@@ -4,15 +4,15 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleDevelopmentRegion</key><string>zh_CN</string>
-    <key>CFBundleDisplayName</key><string>BJTU HPC</string>
-    <key>CFBundleExecutable</key><string>BJTUHPCWidgetExtension</string>
-    <key>CFBundleIdentifier</key><string>com.example.bjtu-hpc-native-widget.widget</string>
+    <key>CFBundleDisplayName</key><string>AutoDL GPU</string>
+    <key>CFBundleExecutable</key><string>AutoDLWidgetExtension</string>
+    <key>CFBundleIdentifier</key><string>com.example.autodl-native-widget.widget</string>
     <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
-    <key>CFBundleName</key><string>BJTU HPC</string>
+    <key>CFBundleName</key><string>AutoDL GPU</string>
     <key>CFBundlePackageType</key><string>XPC!</string>
-    <key>CFBundleShortVersionString</key><string>3.2</string>
+    <key>CFBundleShortVersionString</key><string>1.0</string>
     <key>CFBundleSupportedPlatforms</key><array><string>MacOSX</string></array>
-    <key>CFBundleVersion</key><string>14</string>
+    <key>CFBundleVersion</key><string>1</string>
     <key>LSMinimumSystemVersion</key><string>14.0</string>
     <key>NSExtension</key>
     <dict><key>NSExtensionPointIdentifier</key><string>com.apple.widgetkit-extension</string></dict>

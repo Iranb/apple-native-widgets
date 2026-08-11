@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>KeepAlive</key><true/>
+    <key>Label</key><string>com.example.autodl-native-widget-monitor</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/zsh</string>
+        <string>-lc</string>
+        <string>exec "$HOME/Library/AutoDLNativeWidget/run_autodl_monitor.sh" watch</string>
+    </array>
+    <key>RunAtLoad</key><true/>
+    <key>StandardErrorPath</key><string>/tmp/autodl_native_widget_monitor.err.log</string>
+    <key>StandardOutPath</key><string>/tmp/autodl_native_widget_monitor.out.log</string>
+</dict>
+</plist>

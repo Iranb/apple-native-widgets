@@ -4,19 +4,19 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleDevelopmentRegion</key><string>zh_CN</string>
-    <key>CFBundleDisplayName</key><string>BJTU HPC Native Widget</string>
-    <key>CFBundleExecutable</key><string>BJTUHPCNativeWidget</string>
-    <key>CFBundleIdentifier</key><string>com.example.bjtu-hpc-native-widget</string>
+    <key>CFBundleDisplayName</key><string>AutoDL Native Widget</string>
+    <key>CFBundleExecutable</key><string>AutoDLNativeWidget</string>
+    <key>CFBundleIdentifier</key><string>com.example.autodl-native-widget</string>
     <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
-    <key>CFBundleName</key><string>BJTU HPC Native Widget</string>
+    <key>CFBundleName</key><string>AutoDL Native Widget</string>
     <key>CFBundlePackageType</key><string>APPL</string>
-    <key>CFBundleShortVersionString</key><string>3.2</string>
+    <key>CFBundleShortVersionString</key><string>1.0</string>
     <key>CFBundleSupportedPlatforms</key><array><string>MacOSX</string></array>
-    <key>CFBundleVersion</key><string>14</string>
+    <key>CFBundleVersion</key><string>1</string>
     <key>CFBundleURLTypes</key>
     <array><dict>
-        <key>CFBundleURLName</key><string>com.example.bjtu-hpc-native-widget</string>
-        <key>CFBundleURLSchemes</key><array><string>bjtu-hpc-widget</string></array>
+        <key>CFBundleURLName</key><string>com.example.autodl-native-widget</string>
+        <key>CFBundleURLSchemes</key><array><string>autodl-widget</string></array>
     </dict></array>
     <key>LSMinimumSystemVersion</key><string>14.0</string>
     <key>LSUIElement</key><true/>

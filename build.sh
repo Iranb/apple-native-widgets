@@ -15,7 +15,7 @@ cmake -S "$ROOT/xcode" -B "$XCODE_BUILD" -G Xcode \
   -DCMAKE_OSX_ARCHITECTURES="$ARCH" \
   -DCMAKE_OSX_DEPLOYMENT_TARGET=14.0 >/dev/null
 
-for scheme in BJTUHPCNativeWidget AIDeadlineNativeWidget; do
+for scheme in BJTUHPCNativeWidget AIDeadlineNativeWidget AutoDLNativeWidget; do
   xcodebuild \
     -quiet \
     -project "$XCODE_BUILD/AppleNativeWidgets.xcodeproj" \
@@ -30,14 +30,18 @@ done
 
 HPC_SOURCE="$XCODE_BUILD/Release/BJTUHPCNativeWidget.app"
 DEADLINE_SOURCE="$XCODE_BUILD/Release/AIDeadlineNativeWidget.app"
+AUTODL_SOURCE="$XCODE_BUILD/Release/AutoDLNativeWidget.app"
 [[ -d "$HPC_SOURCE" ]] || { print -u2 "Missing Xcode output: $HPC_SOURCE"; exit 1; }
 [[ -d "$DEADLINE_SOURCE" ]] || { print -u2 "Missing Xcode output: $DEADLINE_SOURCE"; exit 1; }
+[[ -d "$AUTODL_SOURCE" ]] || { print -u2 "Missing Xcode output: $AUTODL_SOURCE"; exit 1; }
 
 ditto "$HPC_SOURCE" "$BUILD/BJTU HPC Native Widget.app"
 ditto "$DEADLINE_SOURCE" "$BUILD/AI Deadline Native Widget.app"
+ditto "$AUTODL_SOURCE" "$BUILD/AutoDL Native Widget.app"
 
 codesign --verify --deep --strict "$BUILD/BJTU HPC Native Widget.app"
 codesign --verify --deep --strict "$BUILD/AI Deadline Native Widget.app"
+codesign --verify --deep --strict "$BUILD/AutoDL Native Widget.app"
 
 HPC_METADATA="$BUILD/BJTU HPC Native Widget.app/Contents/PlugIns/BJTUHPCWidgetExtension.appex/Contents/Resources/Metadata.appintents"
 [[ -d "$HPC_METADATA" ]] || { print -u2 "Missing HPC App Intents metadata: $HPC_METADATA"; exit 1; }

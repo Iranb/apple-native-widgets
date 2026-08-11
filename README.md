@@ -1,11 +1,12 @@
 # Apple Native Widgets
 
-Two open-source macOS WidgetKit components built with SwiftUI:
+Three open-source macOS WidgetKit components built with SwiftUI:
 
 - **BJTU HPC** — redacted GPU/node availability, running-task capacity, paged account queues, account-health colors, and an optional per-account visible-login deep link.
 - **AI Deadline** — upcoming conference deadlines and compact research-project status tracking.
+- **AutoDL GPU** — read-only GPU utilization, memory, temperature, process, and storage monitoring over SSH.
 
-The extensions are read-only. They render local redacted JSON snapshots and never receive portal credentials, submit jobs, cancel jobs, or contact an HPC service directly.
+The extensions are read-only and render local redacted JSON snapshots. The AutoDL companion monitor performs read-only SSH probes using an existing key-based SSH configuration; credentials never enter WidgetKit snapshots.
 
 ## Screenshots
 
@@ -16,12 +17,17 @@ The committed screenshots use synthetic account names and project data.
 | ![BJTU HPC large widget](previews/hpc-large-light.png) | ![AI Deadline large widget](previews/deadline-large-light.png) |
 | ![BJTU HPC dark widget](previews/hpc-large-dark.png) | ![AI Deadline dark widget](previews/deadline-large-dark.png) |
 
+| AutoDL light | AutoDL dark |
+| --- | --- |
+| ![AutoDL large widget](previews/autodl-large-light.png) | ![AutoDL dark widget](previews/autodl-large-dark.png) |
+
 ## Features
 
 - Native small, medium, and large WidgetKit layouts.
 - Semantic system colors, SF Symbols, dynamic light/dark appearance, and monospaced changing values.
 - HPC account paging with native `AppIntent` buttons.
-- `OK / LOGIN / WARN / ERR` account-state legend.
+- Compact, single-line HPC account-state legend.
+- AutoDL multi-instance monitoring with adaptive refresh intervals and redacted snapshots.
 - Login links appear only when the redacted snapshot says an account needs visible authentication.
 - Compatibility widget kinds preserve existing placements across upgrades.
 - Synthetic preview rendering by default; real-data previews are isolated in a Git-ignored directory.
@@ -44,6 +50,9 @@ Relevant files include:
 - `HPC/HPCWidget.swift`
 - `Deadline/AppInfo.plist`
 - `Deadline/ExtensionInfo.plist`
+- `AutoDL/AppInfo.plist`
+- `AutoDL/ExtensionInfo.plist`
+- `AutoDL/autodl_monitor.py`
 - `xcode/CMakeLists.txt`
 - `render-previews.sh`
 
@@ -60,6 +69,7 @@ Signed development products are written to:
 ```text
 /tmp/apple-native-widgets-build/BJTU HPC Native Widget.app
 /tmp/apple-native-widgets-build/AI Deadline Native Widget.app
+/tmp/apple-native-widgets-build/AutoDL Native Widget.app
 ```
 
 The build uses ad-hoc signing for local development. Production distribution requires your own signing identity and Apple provisioning setup.
@@ -85,14 +95,36 @@ Each extension reads `snapshot.json` from its sandboxed Application Support dire
 ```text
 BJTUHPCNativeWidget/snapshot.json
 AIDeadlineNativeWidget/snapshot.json
+AutoDLNativeWidget/snapshot.json
 ```
 
-The Swift `Decodable` structures in `HPC/HPCWidget.swift` and `Deadline/DeadlineWidget.swift` define the accepted schemas. Snapshot producers should:
+The Swift `Decodable` structures in `HPC/HPCWidget.swift`, `Deadline/DeadlineWidget.swift`, and `AutoDL/AutoDLWidget.swift` define the accepted schemas. Snapshot producers should:
 
 - emit aliases instead of portal usernames or email addresses;
 - omit tokens, cookies, passwords, private keys, and raw authentication responses;
 - use anonymous job identifiers where job details are included;
 - write atomically so WidgetKit never reads a partial JSON document.
+
+## AutoDL monitoring
+
+Copy the monitor into its runtime directory, then create a local configuration from the example:
+
+```bash
+mkdir -p "$HOME/Library/AutoDLNativeWidget"
+cp AutoDL/autodl_monitor.py AutoDL/run_autodl_monitor.sh AutoDL/config.example.json "$HOME/Library/AutoDLNativeWidget/"
+mv "$HOME/Library/AutoDLNativeWidget/config.example.json" "$HOME/Library/AutoDLNativeWidget/config.json"
+chmod 700 "$HOME/Library/AutoDLNativeWidget/autodl_monitor.py" "$HOME/Library/AutoDLNativeWidget/run_autodl_monitor.sh"
+chmod 600 "$HOME/Library/AutoDLNativeWidget/config.json"
+```
+
+Edit `config.json` to reference SSH aliases or targets that already support key-based authentication. The configuration deliberately rejects password, token, cookie, secret, and private-key fields. Validate and collect once with:
+
+```bash
+AutoDL/run_autodl_monitor.sh check-config --config "$HOME/Library/AutoDLNativeWidget/config.json"
+AutoDL/run_autodl_monitor.sh once --config "$HOME/Library/AutoDLNativeWidget/config.json"
+```
+
+`AutoDL/com.example.autodl-native-widget-monitor.plist` is an optional LaunchAgent template for continuous adaptive refresh. Update `com.example` consistently before loading it.
 
 ## HPC interactions
 
