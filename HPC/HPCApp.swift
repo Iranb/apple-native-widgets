@@ -37,7 +37,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         request.httpMethod = "POST"
         request.timeoutInterval = 5
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try? JSONSerialization.data(withJSONObject: account.map { ["account": $0] } ?? [:])
+        request.httpBody = try? JSONSerialization.data(withJSONObject: account.map { ["accounts": [$0]] } ?? [:])
         URLSession.shared.dataTask(with: request) { _, _, _ in
             DispatchQueue.main.async {
                 WidgetCenter.shared.reloadAllTimelines()
