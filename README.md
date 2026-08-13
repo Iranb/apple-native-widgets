@@ -26,6 +26,8 @@ The committed screenshots use synthetic account names and project data.
 - Compatibility widget kinds preserve existing placements across upgrades.
 - Synthetic preview rendering by default; real-data previews are isolated in a Git-ignored directory.
 
+See [VERSIONING.md](VERSIONING.md) for the stable branch, release snapshots, and isolated fix branches.
+
 ## Requirements
 
 - macOS 14 or later
